@@ -27,11 +27,13 @@ Add to Github
 
 1. Install Composer Dependencies
 Navigate to the laravel directory of your project in the terminal, then run the following command to install the required dependencies using Composer:
-composer install
+
+           composer install
 
 3. Retry php artisan serve
 Once the Composer dependencies are successfully installed, retry running the Laravel development server:
-php artisan serve
+
+           php artisan serve
 
 Clear Cache (if needed): After installing Composer dependencies, you might need to clear the Laravel cache:
 
