@@ -23,3 +23,20 @@ Add to Github
     git commit -m "Upload Vue 3 project"
 # Replace 'main' with your branch name if different
     git push origin main  
+
+
+1. Install Composer Dependencies
+Navigate to the laravel directory of your project in the terminal, then run the following command to install the required dependencies using Composer:
+composer install
+
+3. Retry php artisan serve
+Once the Composer dependencies are successfully installed, retry running the Laravel development server:
+php artisan serve
+
+Clear Cache (if needed): After installing Composer dependencies, you might need to clear the Laravel cache:
+
+        php artisan config:cache
+        php artisan cache:clear
+
+
+
