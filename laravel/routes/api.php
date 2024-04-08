@@ -16,7 +16,6 @@ Route::delete('/events/{event}', [EventController::class, 'destroy']);
 
 Route::put('/events/accept/{event}', [EventController::class, 'updateClient']);
 Route::patch('/events/accept/{event}', [EventController::class, 'updateClient']);
-Route::delete('/events/accept/{event}', [EventController::class, 'destroyClient']);
 
 Route::get('/limit', [LimitClientController::class, 'index']);
 Route::post('/limit', [LimitClientController::class, 'store']);
