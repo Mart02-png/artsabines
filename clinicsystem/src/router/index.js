@@ -33,12 +33,13 @@ const routes = [
   {
     path: '/login',
     name: 'login',
-    component: LoginView
+    component: LoginView,
   },
   {
     path: '/approval',
     name: 'approval',
-    component: ApprovalView
+    component: ApprovalView,
+    meta: { requiresAuth: true } // Route requires authentication
   },
 ]
 
@@ -56,7 +57,7 @@ router.beforeEach((to, from, next) => {
   // If route requires authentication and user is not logged in, redirect to login page
   if (requiresAuth && !isAuthenticated) {
     next('/login');
-  } else if (to.name === 'login'&& isAuthenticated ) {
+  } else if (to.name === 'login'&& isAuthenticated  || isAuthenticated && to.path === '/') {
     // If user is already logged in and tries to access login page, redirect to admin page or home page
     next('/admin'); // You can change '/admin' to any other page you want to redirect to
   }  else if (to.path === '/approval' && !isAuthenticated) {

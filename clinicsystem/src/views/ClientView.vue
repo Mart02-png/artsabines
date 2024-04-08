@@ -43,7 +43,7 @@ export default {
       nameRegex: /^[a-zA-Z\s]*$/,
       // emailRegex: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
       emailRegex: /^[a-zA-Z0-9._]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-      numberRegex: /^09\d{9}$/,
+      numberRegex: /^(09|63)\d{9}$/,
       showEmailPhoneError: false,
       nameInputValid: true,
         lastnameInputValid: true,
@@ -80,7 +80,7 @@ export default {
         headerToolbar: {
           left: 'prev,next today manuallyAddTime',
           center: 'title',
-          right: 'dayGridMonth,timeGridWeek,timeGridDay,listDay'
+          right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
         },
         themeSystem: 'bootstrap5',
         initialView: 'dayGridMonth',
@@ -442,7 +442,7 @@ export default {
             </div>
 
             <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
               <button type="button" class="btn btn-primary" @click="saveChanges(selectedInfo)">Save changes</button>
             </div>
           </div>
@@ -466,7 +466,7 @@ export default {
             </div>
               
             <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @click="closeModal()">Close</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @click="closeModal()">Cancel</button>
               <button type="button" class="btn btn-primary" @click="savingConfirmationEvent(selectedInfo)" :disabled="buttonDisabled"> {{ buttonText }} </button>
             </div>
           </div>
@@ -488,7 +488,7 @@ export default {
                 </h4>
               </div>
               <div class="modal-footer">
-                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancel</button>
               </div>
             </div>
           </div>
