@@ -50,12 +50,6 @@ class EventController extends Controller
         return response()->json($event, 200);
     }
 
-    public function destroyClient(Event $event)
-    {
-        $event->delete();
-        return response()->json(null, 204); 
-    }
-
     public function destroy(Event $event)
     {
         $event->delete();

@@ -66,6 +66,10 @@
           const token = response.data.token;
           console.log('Logged in successfully');
           console.log('Token:', token);
+          localStorage.setItem('email', this.email);
+          // After successful login
+          localStorage.setItem('token', response.data.token);
+
           this.$router.push({ name: 'admin' });
           this.buttonText = 'Login';
           this.buttonDisabled = false;

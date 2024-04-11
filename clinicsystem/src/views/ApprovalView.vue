@@ -122,7 +122,7 @@ export default {
     editEvent(id) {
       console.log('Edit this ID:', id);
       // Implement your logic here for editing the item with the specified ID
-      axios.put(`http://localhost:8000/api/events/accept/${id}`,{
+      axios.put(`http://localhost:8000/api/events/${id}`,{
         user: "clientApproved"
       })
         .then(response => {
