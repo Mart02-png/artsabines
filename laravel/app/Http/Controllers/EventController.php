@@ -34,7 +34,6 @@ class EventController extends Controller
            
             'start' => 'required|date',
             'end' => 'required|date',
-            'allDay' => 'required|boolean',
         ]);
 
         $event->update($validatedData);

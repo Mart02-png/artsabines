@@ -30,16 +30,18 @@ export default {
 
   data: function () {
     return {
+      showDateTimeInputs: false,
+      busySchedule: '',
+      selectedStartTime: '',
+      selectedEndTime: '',
       inputPlaceholder: 'Schedule Name',
-      // showInputsNumAplha: false,
-      buttonText: 'Save changes',
+      buttonText: 'Confirm',
       modalTitle: 'Create Schedule',
       buttonDisabled: false,
       modal: null,
       deletemodal: null,
       limitModal: null,
       savingConfirmation: null,
-      numberModal: null,
       adminEmail: '',
 
 
@@ -47,7 +49,8 @@ export default {
       numberRegex: /^\d+$/,
       nameInput: '',
       numberInput: '',
-      nameInputValid: false,
+      nameInputValid: true,
+      nameNumberlimitTime: false,
       // lastnameInput: '',
       // emailInput: '',
       calendarOptions: {
@@ -97,7 +100,7 @@ export default {
         eventResize: this.handleEventResize,
         eventDisplay: 'block',
         slotMinTime: '05:00',
-        slotMaxTime: '17:00',
+        slotMaxTime: '18:00',
         slotDuration: '01:00',
         allDaySlot: false,
         /* you can update a remote database when these fire:
@@ -126,9 +129,6 @@ export default {
       // Optional: specify options here
     });
 
-    this.numberModal = new bootstrap.Modal(document.getElementById('numberModal'), {
-      // Optional: specify options here
-    });
     this.adminEmail = localStorage.getItem('email');
   },
 
@@ -165,25 +165,23 @@ export default {
     },
 
     fetchEvents() {
-      // Fetch events from local storage
-      let eventsFromLocalStorage = JSON.parse(localStorage.getItem('events')) || [];
-      // Fetch events from the API
       axios.get('http://localhost:8000/api/events')
         .then(response => {
 
             let eventsFromAPI = response.data.filter(event => event.user === 'admin' ||  event.user === 'clientApproved' ).map(event => {
           
             let color;
+
             switch (event.user) {
                 case 'clientApproval':
                     color = '#007FFF';
                     break;
                 case 'clientApproved':
-                    color = '#FF9E00';
+                    color = '#008000';
                     break;
                 case 'admin':
                     color = '#FF2D00';
-                    break;
+                    break;  
                 default:
                     // Handle default case if needed
                     break;
@@ -200,13 +198,9 @@ export default {
             };
         });
 
-          // Combine events from local storage and API
-          let allEvents = eventsFromLocalStorage.concat(eventsFromAPI);
-
-          // Update the calendar events with combined events
-          // this.$set(this.calendarOptions, 'events', allEvents);
-          this.calendarOptions.events = allEvents; // Directly assign events to calendarOptions
-
+          this.calendarOptions.events = eventsFromAPI; // Directly assign events to calendarOptions
+          this.allevents.push(eventsFromAPI);
+          // console.log("eventsFromAPI", eventsFromAPI, "allevents", this.allevents);
         })
         .catch(error => {
           console.error('Error fetching events:', error);
@@ -219,29 +213,66 @@ export default {
       // this.modal.show();
       this.limitModal.show();
       this.selectedInfo = selectInfo; // Store selectInfo in selectedInfo
+
+      if (selectInfo.view.type === 'dayGridMonth'){
+        this.showDateTimeInputs = true;
+      }else if(selectInfo.view.type === 'timeGridWeek' || selectInfo.view.type === 'timeGridDay'){
+        this.showDateTimeInputs = false;
+      }
+    },
+
+    backToChoose(){
+      this.limitModal.show();
+      this.modal.hide();
+      this.nameInput = '';
     },
 
     createEventSelected(selectedInfo){
-      this.inputPlaceholder = 'Schedule Name'; 
+      this.nameInput = '';
+      this.nameNumberlimitTime = false;
       this.limitModal.hide();
-      this.modal.show();
-      // this.limitModal.show();
-      // this.showInputsNumAplha = true;
       this.selectedInfo = selectedInfo; // Store selectInfo in selectedInfo
+      this.inputPlaceholder = 'Schedule Name'; 
       this.modalTitle = 'Create Schedule';
-      
+      this.modal.show();
     },
 
     limitEventSelected(selectedInfo){
+      this.nameInput = '';
+      this.nameNumberlimitTime = true;
       this.limitModal.hide();
-      this.numberModal.show();
       this.selectedInfo = selectedInfo; // Store selectInfo in selectedInfo
       this.inputPlaceholder = 'Limit Client Schedule'; 
       this.modalTitle = 'Limit date Schedule';
-      console.log(selectedInfo);
+      this.modal.show();
+    },
+
+    //Schedule Hours
+    handleScheduleChange() {
+      
+        switch (this.busySchedule) {
+        case 'Morning':
+          this.selectedStartTime = '05:00:00';
+          this.selectedEndTime = '12:00:00';
+          break;
+        case 'Afternoon':
+          this.selectedStartTime = '13:00:00';
+          this.selectedEndTime = '18:00:00';
+          break;
+        case 'WholeDay':
+          this.selectedStartTime = '00:00:00';
+          this.selectedEndTime = '23:59:59';
+          break;
+        case 'CustomSchedule':
+          // Handle custom schedule selection if needed
+          break;
+        default:
+          break;
+      }
     },
 
     saveChanges(selectedInfo) {
+      // console.log("selectedStartTime", this.selectedStartTime ,"selectedEndTime", this.selectedEndTime);
 
       // Reset validity flags
       this.nameInputValid = this.nameInput.trim() !== '';
@@ -249,53 +280,56 @@ export default {
       if (!this.nameInputValid) {
         return;
       }
-      if (!this.nameRegex.test(this.nameInput)) {
-        this.nameInputValid = false;
-        return;
+      if(!this.nameNumberlimitTime){
+        if (!this.nameRegex.test(this.nameInput)) {
+          this.nameInputValid = false;
+          return;
+        }
+      }else{
+        if (!this.numberRegex.test(this.nameInput)) {
+          this.nameInputValid = false;
+          return;
+        }
       }
-
       this.modal.hide();
       this.savingConfirmation.show();
       this.confirmSavingInfo = selectedInfo;
     },
 
-    numbersaveChanges(selectedInfo){
-        // Reset validity flags
-        this.nameInputValid = this.nameInput.trim() !== '';
-
-        if (!this.nameInputValid) {
-          return;
-        }
-        if (!this.numberRegex.test(this.nameInput)) {
-          this.nameInputValid = false;
-          return;
-        }
-
-        this.numberModal.hide();
-        this.savingConfirmation.show();
-        this.confirmSavingInfo = selectedInfo;
-    },
-
     savingConfirmationEvent(confirmSavingInfo) {
-      this.buttonText = 'Processing';
+
+
+      this.buttonText = 'Processing...';
       this.buttonDisabled = true;
 
       let calendarApi = confirmSavingInfo.view.calendar
       calendarApi.unselect() // clear date selection
+
+      if (confirmSavingInfo.view.type === 'dayGridMonth'){
+        this.selectedStartTime = formatDatetime(confirmSavingInfo.startStr)+ ' '  + this.selectedStartTime;
+        this.selectedEndTime = formatDatetime(confirmSavingInfo.startStr) + ' ' + this.selectedEndTime;
+
+      }else if(confirmSavingInfo.view.type === 'timeGridWeek' || confirmSavingInfo.view.type === 'timeGridDay'){
+        this.selectedStartTime = formatDatetime(confirmSavingInfo.startStr);
+        this.selectedEndTime = formatDatetime(confirmSavingInfo.endStr);
+      }
+
+      console.log(this.selectedStartTime, this.selectedEndTime);
       
       axios.post('http://localhost:8000/api/events', {
 
           title: this.nameInput,
           email: this.adminEmail,
-          start: formatDatetime(confirmSavingInfo.startStr),
-          end: formatDatetime(confirmSavingInfo.endStr),
+          start: this.selectedStartTime,
+          end: this.selectedEndTime,
           user: 'admin',
-          allDay: confirmSavingInfo.allDay
+          allDay: 0
         })
           .then(response => {
             // Hide the modal
             this.savingConfirmation.hide();
-            this.buttonText = 'Save changes';
+            this.buttonText = 'Confirm';
+            this.buttonDisabled = false;
             // Handle success
             console.log('Event added:', response.data);
             console.log('Event added ID:', response.data.id);
@@ -337,29 +371,19 @@ export default {
 
     handleEventDrop(info) {
       const eventId = info.event.id;
-      const allDay = info.event.allDay;
-      const start_formatdate = formatDatetime(info.event.startStr);
-      let end_formatdate = formatDatetime(info.event.endStr);
+      // const allDay = info.event.allDay;
+      // let start_formatdate = formatDatetime(info.event.startStr);
+      // let end_formatdate = formatDatetime(info.event.endStr);
 
-      // If end date is empty, set it to start date
-       const moment = require('moment');
-      // If end date is empty, set it to start date
-      if (end_formatdate === "") {
-        end_formatdate = moment(start_formatdate).add(1, 'hours').format('YYYY-MM-DD HH:mm:ss');
-      }else{
-        end_formatdate = moment(start_formatdate).add(24, 'hours').format('YYYY-MM-DD HH:mm:ss');
-      }
-
-      console.log("handleEventDrop : ", eventId, "start_formatdate: " + start_formatdate, "End: " + end_formatdate, "AllDay: ", allDay);
+      // console.log("handleEventDrop : ", eventId, "start_formatdate: " + start_formatdate, "End: " + end_formatdate, "AllDay: ", allDay);
 
       axios.put(`http://localhost:8000/api/events/${eventId}`, {
-        start: start_formatdate,
-        end: end_formatdate,
-        allDay: allDay
+        start: formatDatetime(info.event.startStr),
+        end: formatDatetime(info.event.endStr),
+        // allDay: allDay
       })
         .then(response => {
           console.log('Event updated:', response.data);
-
         })
         .catch(error => {
           console.error('Error updating event:', error.response.data);
@@ -391,6 +415,8 @@ export default {
       this.allevents = events;
     }
   },
+
+
 
 
 }
@@ -431,7 +457,7 @@ export default {
       </FullCalendar>
     </div>
 
-     <!-- Modal -->
+     <!-- Name Modal -->
      <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content">
@@ -445,46 +471,59 @@ export default {
                 <div class="mb-3">
 
                   <div class="mb-3">
-                        <input type="text" class="form-control" id="nameInput" v-model="nameInput" placeholder="Input Name">
-                        <small v-if="!nameInput  && !nameInputValid" class="text-danger">Please fill the input field</small>
-                        <small v-else-if="nameInput && !nameRegex.test(nameInput)" class="text-danger">Please fill valid Schedule</small>
-                   
+                    <input type="text" class="form-control" id="nameInput" v-model="nameInput" :placeholder=inputPlaceholder>
+                    <small v-if="!nameInput  && !nameInputValid" class="text-danger">Please fill the input field</small>
+                    <small v-else-if="nameInput && !nameRegex.test(nameInput) && !nameNumberlimitTime" class="text-danger">Please fill valid Schedule</small>
+                    <small v-else-if="nameInput && !numberRegex.test(nameInput) && nameNumberlimitTime" class="text-danger">Please fill valid Schedule</small>
+                    
+                    
+                  </div>
+                
+                <label  v-if="showDateTimeInputs" for="time">Select schedule hours:</label>
+                  <select  v-if="showDateTimeInputs" id="time" name="time" v-model="busySchedule" @change="handleScheduleChange">
+                    <option value="Morning">Morning (5am - 12pm)</option>
+                    <option value="Afternoon">Afternoon (1pm - 5pm)</option>
+                    <option value="WholeDay">Whole day  (5am - 5pm)</option>
+                    <option value="CustomSchedule">Custom</option>
+                  </select>
+                  <div v-if="busySchedule === 'CustomSchedule'">
+                  <label for="startTime">Start Time:</label>
+                  <select id="startTime" name="startTime" v-model="selectedStartTime">
+                    <option value="05:00:00">05:00 AM</option>
+                    <option value="06:00:00">06:00 AM</option>
+                    <option value="07:00:00">07:00 AM</option>
+                    <option value="08:00:00">08:00 AM</option>
+                    <option value="09:00:00">09:00 AM</option>
+                    <option value="10:00:00">10:00 AM</option>
+                    <option value="11:00:00">11:00 AM</option>
+                    <option value="13:00:00">01:00 PM</option>
+                    <option value="14:00:00">02:00 PM</option>
+                    <option value="15:00:00">03:00 PM</option>
+                    <option value="16:00:00">04:00 PM</option>
+                    <option value="17:00:00">05:00 PM</option>
+                  </select>
+                  <label for="endTime">End Time:</label>
+                  <select id="endTime" name="endTime" v-model="selectedEndTime">
+                    <option value="05:00:00">05:00 AM</option>
+                    <option value="06:00:00">06:00 AM</option>
+                    <option value="07:00:00">07:00 AM</option>
+                    <option value="08:00:00">08:00 AM</option>
+                    <option value="09:00:00">09:00 AM</option>
+                    <option value="10:00:00">10:00 AM</option>
+                    <option value="11:00:00">11:00 AM</option>
+                    <option value="13:00:00">01:00 PM</option>
+                    <option value="14:00:00">02:00 PM</option>
+                    <option value="15:00:00">03:00 PM</option>
+                    <option value="16:00:00">04:00 PM</option>
+                    <option value="17:00:00">05:00 PM</option>
+                  </select>
                 </div>
                 </div>
               </div>
 
             <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-              <button type="button" class="btn btn-primary" @click="saveChanges(selectedInfo)">Save changes</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-           <!-- numberModal Modal -->
-     <div class="modal fade" id="numberModal" tabindex="-1" aria-labelledby="numberModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-          <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-              <h5 class="modal-title" id="exampleModalLabel">{{ modalTitle }}</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-              <!-- Modal Body Content -->
-              <div class="modal-body">  
-
-                <div class="mb-3">
-
-                  <div class="mb-3">
-                        <input type="text" class="form-control" id="nameInput" v-model="nameInput" placeholder="Input number">
-                        <small v-if="!nameInput  && !nameInputValid" class="text-danger">Please fill the input field</small>
-                        <small v-else-if="nameInput && !numberRegex.test(nameInput)" class="text-danger">Please fill valid Limit Schedule</small>
-                </div>
-                </div>
-              </div>
-
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-              <button type="button" class="btn btn-primary" @click="numbersaveChanges(selectedInfo)">Save changes</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @click="backToChoose" >Back</button>
+              <button type="button" class="btn btn-primary" @click="saveChanges(selectedInfo)">Proceed</button>
             </div>
           </div>
         </div>
@@ -506,7 +545,7 @@ export default {
             </div>
               
             <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @click="closeModal()">Close</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @click="closeModal()">Back</button>
               <button type="button" class="btn btn-primary" @click="savingConfirmationEvent(selectedInfo)" :disabled="buttonDisabled"> {{ buttonText }} </button>
             </div>
           </div>
@@ -530,7 +569,7 @@ export default {
               </div>
 
             <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
             </div>
           </div>
         </div>
@@ -548,7 +587,7 @@ export default {
               <h4><p>Are you sure you want to delete?</p></h4>
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
               <button type="button" class="btn btn-danger" @click="deleteItemModal(clickedInfo)">Delete</button>
             </div>
           </div>
@@ -687,6 +726,13 @@ html, body {
 .custom-content{
  font-size: 12px;
 }
+
+/* DAY SLOT REMOVE MARGIN */
+.fc-direction-ltr .fc-timegrid-col-events{
+  margin: 0;
+}
+
+
 
   </style>
 

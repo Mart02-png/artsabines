@@ -29,8 +29,7 @@ export default {
   data: function () {
     return {
       showDateTimeInputs: false,
-      selectedDate: '',
-      selectedTime: '',
+      selectedTime: '', // Time selected from the dropdown
       buttonText: 'Save changes',
       modalTitle: 'Create Schedule',
       buttonDisabled: false,
@@ -43,7 +42,7 @@ export default {
       nameRegex: /^[a-zA-Z\s]*$/,
       // emailRegex: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
       emailRegex: /^[a-zA-Z0-9._]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-      numberRegex: /^09\d{9}$/,
+      numberRegex: /^09\d{9}|^63\d{10}$/,
       showEmailPhoneError: false,
       nameInputValid: true,
         lastnameInputValid: true,
@@ -52,12 +51,6 @@ export default {
         validNumber: true,
 
       calendarOptions: {
-        customButtons: {
-          manuallyAddTime: {
-            text: 'Manually add Time',
-            click: this.manuallyAddTime
-          }
-        },
         //1 day only
         selectAllow: function (selectionInfo) {
           
@@ -78,7 +71,7 @@ export default {
           interactionPlugin // needed for dateClick
         ],
         headerToolbar: {
-          left: 'prev,next today manuallyAddTime',
+          left: 'prev,next today',
           center: 'title',
           right: 'dayGridMonth,timeGridWeek,timeGridDay,listDay'
         },
@@ -93,7 +86,7 @@ export default {
         eventsSet: this.handleEvents,
         eventDisplay: 'block',
         slotMinTime: '05:00',
-        slotMaxTime: '17:00',
+        slotMaxTime: '18:00',
         slotDuration: '01:00',
         allDaySlot: false,
       },
@@ -119,24 +112,10 @@ export default {
 
   methods: {
 
-    saveDateTimeRange() {
-      
-      // console.log("Selected Date:", this.selectedDate);
-      // console.log("Selected Time:", document.getElementById("time").value);
-    },
-
-    manuallyAddTime() {
-      this.modalTitle = 'Manually create Schedule';
-      this.showDateTimeInputs = true;
-        // Implement the logic for adding time manually here
-        
-      this.modal.show();
-    },
-
     fetchEvents() {
       axios.get('http://localhost:8000/api/events')
         .then(response => {
-          let eventsFromAPI = response.data.filter(event => event.user === 'clientApproval').map(event => {
+          let eventsFromAPI = response.data.filter(event => event.user === 'clientApproval' || event.user === 'admin').map(event => {
             let color;
             switch (event.user) {
               case 'clientApproval':
@@ -161,6 +140,9 @@ export default {
             };
           });
           this.calendarOptions.events = eventsFromAPI;
+          this.allevents.push(eventsFromAPI);
+          console.log("eventsFromAPI", eventsFromAPI, "allevents", this.allevents);
+
         })
         .catch(error => {
           console.error('Error fetching events:', error);
@@ -168,35 +150,32 @@ export default {
     },
 
     handleDateSelect(selectInfo) {
+      console.log("selectInfo", selectInfo, "allevents", this.allevents);
       this.modalTitle = 'Create Schedule';
-      this.showDateTimeInputs = false;
-      if (this.showDateTimeInputs) {
-          console.log("Get date from manual add time");
-        } else {
-          console.log("Get date from selected date");
-        }
-    const moment = require('moment');
 
-    const selectedTime = moment(selectInfo.startStr).format('HH:mm');
-    const currentTime = moment().format('HH:mm');
-    // console.log("selectedTime", selectedTime, "currentTime", currentTime);
+      const moment = require('moment');
 
-    if (selectInfo.view.type === 'dayGridMonth' &&
-        ((currentTime >= '00:00' && currentTime < '05:00') ||
-        (currentTime >= '12:00' && currentTime < '13:00') ||
-        (currentTime >= '17:00' && currentTime < '24:00'))) {
-        updateErrorMessage("No Appointment on this hours");
-        this.errorModal.show();
-    } else if ((selectInfo.view.type === 'timeGridWeek' || selectInfo.view.type === 'timeGridDay') &&
-        ((selectedTime >= '00:00' && selectedTime < '05:00') ||
-        (selectedTime >= '12:00' && selectedTime < '13:00') ||
-        (selectedTime >= '17:00' && selectedTime < '24:00'))) {
-        updateErrorMessage("No Appointment on this hours");
-        this.errorModal.show();
-    } else {
-        this.checkEventOverlap(selectInfo);
-    }
-},
+      const selectedTime = moment(selectInfo.startStr).format('HH:mm');
+      const currentTime = moment().format('HH:mm');
+
+      if (selectInfo.view.type === 'dayGridMonth' &&
+          (currentTime >= '12:00' && currentTime < '13:00')) {
+          updateErrorMessage("Lunch break");
+          this.errorModal.show();
+      } else if ((selectInfo.view.type === 'timeGridWeek' || selectInfo.view.type === 'timeGridDay') &&
+          (selectedTime >= '12:00' && selectedTime < '13:00')) {
+          updateErrorMessage("Lunch break");
+          this.errorModal.show();
+      } else {
+          this.checkEventOverlap(selectInfo);
+      }
+
+      if (selectInfo.view.type === 'dayGridMonth'){
+        this.showDateTimeInputs = true;
+      } else if(selectInfo.view.type === 'timeGridWeek' || selectInfo.view.type === 'timeGridDay'){
+        this.showDateTimeInputs = false;
+      }
+    },
 
     checkEventOverlap(selectInfo) {
       const moment = require('moment');
@@ -237,43 +216,37 @@ export default {
       this.buttonDisabled = true;
 
       this.newEventTitle = this.nameInput + ' ' + this.lastnameInput;
-
-
       // Format start and end dates for timeGridWeek and timeGridDay
       const moment = require('moment');
       
       let lastStart = '';
       let lastEnd = '';
 
-      if (this.showDateTimeInputs) {
-        let selectedTimePlusOneHour = moment(this.selectedTime, 'HH:mm').add(1, 'hour').format('HH:mm');
-        console.log("Get date from manual add time", this.showDateTimeInputs , confirmSavingInfo);
-        lastStart = this.selectedDate + ' ' + this.selectedTime;
-        lastEnd = this.selectedDate + ' ' + selectedTimePlusOneHour;
-        // console.log("lastStart", lastStart, "lastEnd", lastEnd, "selectedTimePlusOneHour", selectedTimePlusOneHour);
-      } else {
+      // if (this.showDateTimeInputs) {
+      //   let selectedTimePlusOneHour = moment(this.selectedTime, 'HH:mm').add(1, 'hour').format('HH:mm');
+      //   console.log("Get date from manual add time", this.showDateTimeInputs , confirmSavingInfo);
+      //   lastStart = this.selectedDate + ' ' + this.selectedTime;
+      //   lastEnd = this.selectedDate + ' ' + selectedTimePlusOneHour;
+      //   // console.log("lastStart", lastStart, "lastEnd", lastEnd, "selectedTimePlusOneHour", selectedTimePlusOneHour);
+      // } else {
         let calendarApi = confirmSavingInfo.view.calendar;
         calendarApi.unselect() // clear date selection
 
-        let currentTimeNow = moment().format('HH:00:00');
-        let startNow = currentTimeNow;
-        let endNow = moment(currentTimeNow, 'HH:00:00').add(1, 'hour').format('HH:00:00');
+        // let currentTimeNow = moment().format('HH:00:00');
+        let startNow = this.selectedTime;
+        let endNow = moment(startNow, 'HH:00:00').add(1, 'hour').format('HH:00:00');
 
         // Format start and end dates for dayGridMonth
         let start = formatDatetime(confirmSavingInfo.startStr);
         let end = formatDatetime(confirmSavingInfo.endStr);
 
-        console.log("Get date from selected date", this.showDateTimeInputs , confirmSavingInfo);
-
         if (confirmSavingInfo.view.type === 'dayGridMonth'){
           lastStart = start + ' ' + startNow;
-          lastEnd = end + ' ' + endNow;
+          lastEnd = start + ' ' + endNow;
         }else if(confirmSavingInfo.view.type === 'timeGridWeek' || confirmSavingInfo.view.type === 'timeGridDay'){
           lastStart = start;
           lastEnd = end;
         }
-        
-      }
       console.log("lastStart", lastStart, "lastEnd", lastEnd);
 
       
@@ -402,26 +375,7 @@ export default {
             <!-- Modal Body Content -->
             <div class="modal-body">
 
-              <div class="mb-3">
-                <label v-if="showDateTimeInputs" for="date">Date:</label>
-                <input v-if="showDateTimeInputs" type="date" id="date" v-model="selectedDate">
-            
-                <label v-if="showDateTimeInputs" for="time">Time:</label>
-                  <select v-if="showDateTimeInputs" id="time" name="time" v-model="selectedTime">
-                    <option value="05:00:00">05:00 AM</option>
-                    <option value="06:00:00">06:00 AM</option>
-                    <option value="07:00:00">07:00 AM</option>
-                    <option value="08:00:00">08:00 AM</option>
-                    <option value="09:00:00">09:00 AM</option>
-                    <option value="10:00:00">10:00 AM</option>
-                    <option value="11:00:00">11:00 AM</option>
-                    <option value="01:00:00">01:00 PM</option>
-                    <option value="02:00:00">02:00 PM</option>
-                    <option value="03:00:00">03:00 PM</option>
-                    <option value="04:00:00">04:00 PM</option>
-                    <option value="05:00:00">05:00 PM</option>
-                  </select>
-              </div>
+             
               <div class="mb-3">
                 <input type="text" class="form-control" id="nameInput" v-model="nameInput" placeholder="Name">
                 <small v-if="!nameInput && !nameInputValid" class="text-danger">Please fill Name</small>
@@ -438,7 +392,23 @@ export default {
                 <small v-if="!emailInput && !emailInputValid" class="text-danger">Please fill contact information</small>
                 <small v-else-if="emailInput && !emailRegex.test(emailInput) && !numberRegex.test(emailInput)" class="text-danger">Please fill valid Email or valid phone number</small>
               </div>
-              <!-- Rest of your modal content -->
+              <div class="mb-3">
+                <label v-if="showDateTimeInputs" for="time">Time:</label>
+                  <select v-if="showDateTimeInputs"  id="time" name="time" v-model="selectedTime">
+                    <option value="05:00:00">05:00 AM</option>
+                    <option value="06:00:00">06:00 AM</option>
+                    <option value="07:00:00">07:00 AM</option>
+                    <option value="08:00:00">08:00 AM</option>
+                    <option value="09:00:00">09:00 AM</option>
+                    <option value="10:00:00">10:00 AM</option>
+                    <option value="11:00:00">11:00 AM</option>
+                    <option value="01:00:00">01:00 PM</option>
+                    <option value="02:00:00">02:00 PM</option>
+                    <option value="03:00:00">03:00 PM</option>
+                    <option value="04:00:00">04:00 PM</option>
+                    <option value="05:00:00">05:00 PM</option>
+                  </select>
+              </div>
             </div>
 
             <div class="modal-footer">
@@ -508,6 +478,12 @@ body {
   padding: 0;
 
   /* overflow: hidden; Disable scrolling of the entire page */
+}
+
+.time-slot-occupied {
+  background-color: red;
+  color: white;
+  font-weight: bold;
 }
 
 @media (max-width: 650px) {
@@ -712,6 +688,6 @@ i {
 }
 
 .fc-timegrid-slot {
-  line-height: 46px;
+  line-height: 42.5px;
 }
 </style>
