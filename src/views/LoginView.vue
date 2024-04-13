@@ -1,39 +1,44 @@
 <template>
-    <div class="app">
-      <div class="container">
-        <div class="d-flex justify-content-center align-items-center" style="min-height: 100vh;">
-       
-          <div class="col-md-6">
-            <div class="card border-0 bg-transparent">
-              <div class="card-body p-5">
-                <div class="text-center mb-4">
-                  <img src="../assets/icon.png" alt="Logo" width="160">
-                </div>
-                <form @submit.prevent="login">
-                  <div class="mb-3">
-                    <label for="email" class="form-label visually-hidden">Email</label>
-                    <div class="input-group">
-                      <span class="input-group-text"><img src="../assets/email.png" width="40" alt="Email"></span>
-                      <input type="email" class="form-control" id="email" placeholder="Email" v-model="email" autocomplete="current-email" required>
-                    </div>
-                  </div>
-                  <div class="mb-3">
-                    <label for="password" class="form-label visually-hidden">Password</label>
-                    <div class="input-group">
-                      <span class="input-group-text"><img src="../assets/password.png" width="40" alt="Password"></span>
-                      <input type="password" class="form-control" id="password" placeholder="Password" v-model="password" autocomplete="current-password" required>
-                    </div>
-                  </div>
-                  <button type="submit" class="btn btn-primary w-100" :disabled="buttonDisabled"> {{ buttonText }}</button>
-                </form>
-                <p class="text-center mt-3 text-danger" v-if="errorMessage">{{ errorMessage }}</p>
+  <div class="app">
+    <div class="container">
+      <div class="d-flex justify-content-center align-items-center min-vh-100">
+        <div class="col-md-8"> <!-- Adjusted width to col-md-6 -->
+          <div class="card border-0 shadow-lg bg-transparent">
+            <div class="card-body p-5">
+              <div class="text-center mb-4">
+                <img src="../assets/icon.png" alt="Logo" width="160">
               </div>
+              <form @submit.prevent="login">
+                <div class="mb-3">
+                  <label for="email" class="form-label visually-hidden">Email</label>
+                  <div class="input-group">
+                    <span class="input-group-text">
+                      <i class="fas fa-envelope"></i> <!-- Font Awesome icon for email -->
+                    </span>
+                    <input type="email" class="form-control" id="email" placeholder="Email" v-model="email" autocomplete="current-email" required>
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label for="password" class="form-label visually-hidden">Password</label>
+                  <div class="input-group">
+                    <span class="input-group-text">
+                      <i class="fas fa-lock"></i> <!-- Font Awesome icon for password -->
+                    </span>
+                    <input type="password" class="form-control" id="password" placeholder="Password" v-model="password" autocomplete="current-password" required>
+                  </div>
+                </div>
+                <button type="submit" class="btn btn-primary w-100" :disabled="buttonDisabled">{{ buttonText }}</button>
+              </form>
+              <p class="text-center mt-3 text-danger" v-if="errorMessage">{{ errorMessage }}</p>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </template>
+  </div>
+</template>
+
+
   
   <script>
   import axios from 'axios';
@@ -117,38 +122,10 @@
   };
   </script>
   
-  
-  <style>
-  
-  #app {
-  background-image: url("../assets/bgLogin.jpg");
-  background-size: cover;
-  background-position: center;
-  height: 100vh;
-}
-  .visually-hidden {
-    position: absolute !important;
-    width: 1px !important;
-    height: 1px !important;
-    padding: 0 !important;
-    margin: -1px !important;
-    overflow: hidden !important;
-    clip: rect(0, 0, 0, 0) !important;
-    white-space: nowrap !important;
-    border: 0 !important;
-  }
+  <style src="@/styles/LoginViewStyles.css">
 
-  /* Additional style for making card border transparent */
-.card .border-0 .shadow-lg .bg-transparent{
-  border-color: rgba(255, 255, 255, 0.827);
-  background-color: rgba(255, 255, 255, 0.937);
-  border-radius: 20px;
-}
 
-.card-body {
-  border-color: rgba(255, 255, 255, 0.827);
-  background-color: rgba(255, 255, 255, 0.937); /* Optional: If you want the card body to be semi-transparent too */
-  border-radius: 20px;
-}
-  </style>
+
+</style>
+
   

@@ -52,6 +52,7 @@ Route::delete('/limit/{id}', [LimitClientController::class, 'destroy']);
 //     Route::post('/logout', [AdminController::class, 'logout']);
 // });
 
+
 Route::middleware(['api'])->prefix('auth')->group(function () {
     Route::post('/users', [AdminController::class, 'index']);
     Route::post('/register', [AdminController::class, 'register']);

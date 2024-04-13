@@ -1,0 +1,77 @@
+/* Calendar container */
+.admin-app-calendar {
+    position: fixed;
+    top: 10px; /* Adjust the top position as needed */
+    left: 260px;
+    width: calc(100% - 275px); /* Adjust based on sidebar width */
+    
+    background-color: rgb(230, 231, 233);
+    border: 1px solid black;
+    border-radius: 8px;
+    z-index: 1000;
+  }
+  
+  /* Header toolbar buttons */
+  .admin-app-calendar .fc-header-toolbar button {
+    margin: 10px;
+    text-transform: capitalize;
+    
+  }
+  
+  /* FullCalendar component */
+  
+  /* Calendar event customization */
+
+  
+  .admin-app-calendar .fc-event {
+    color: white;
+  }
+  
+  .admin-app-calendar .fc-list-event-title,
+  .admin-app-calendar .fc-list-event-time {
+    color: black;
+  }
+  
+  /* Modal backdrop */
+  .admin-app-calendar .modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+  
+  /* Specific views in FullCalendar */
+  .admin-app-calendar .fc-timegrid-event .fc-content,
+  .admin-app-calendar .fc-timegrid-axis,
+  .admin-app-calendar .fc-day-header,
+  .admin-app-calendar .fc-timegrid-slots td,
+  .admin-app-calendar .fc-timegrid-slots .fc-timegrid-slot-lane,
+  .admin-app-calendar .fc-daygrid-day-number,
+  .admin-app-calendar .fc-col-header {
+    font-weight: bold;
+  }
+  
+  /* Customization */
+  .admin-app-calendar .fc-view-harness {
+    background-color: rgba(230, 231, 233, 0.783);
+  }
+  
+  /* Hover effect */
+  .admin-app-calendar .fc-day:hover {
+    background-color: #ADD8E6;
+    cursor: pointer;
+  }
+  
+  /* Display inline for event time and title */
+  .admin-app-calendar .fc-event-time,
+  .admin-app-calendar .fc-event-title {
+    display: inline;
+  }
+  
+  /* Adjusting line height for time slots */
+  .admin-app-calendar .fc-timegrid-slot {
+    line-height: 46px;
+  }
+  

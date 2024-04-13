@@ -1,0 +1,142 @@
+    JWT TOKEN
+
+config>cors.php
+        'supports_credentials' => true,
+    
+Middleware (Added)
+    public function handle($request, Closure $next, ...$guards)
+    {
+        if($jwt = $request->cookie('jwt')){
+            $request->headers->set('Authorization', 'Bearer '. $jwt);
+        }
+        
+        $this->authenticate($request, $guards);
+
+        return $next($request);
+    }
+
+        JWT TOKEN end
+    
+    if (selectInfo.view.type === 'dayGridMonth' &&
+        ((currentTime >= '00:00' && currentTime < '05:00') ||
+        (currentTime >= '12:00' && currentTime < '13:00') ||
+        (currentTime >= '17:00' && currentTime < '24:00'))) {
+        updateErrorMessage("No Appointment on this hours");
+        this.errorModal.show();
+    } else if ((selectInfo.view.type === 'timeGridWeek' || selectInfo.view.type === 'timeGridDay') &&
+        ((selectedTime >= '00:00' && selectedTime < '05:00') ||
+        (selectedTime >= '12:00' && selectedTime < '13:00') ||
+        (selectedTime >= '17:00' && selectedTime < '24:00'))) {
+        updateErrorMessage("No Appointment on this hours");
+        this.errorModal.show();
+    } else {
+        this.checkEventOverlap(selectInfo);
+    }
+
+
+    migration
+
+    docker-compose exec laravel php artisan migrate
+
+
+
+
+
+        dayCellContent(arg) {
+      // console.log(this.allevents);
+      const { date, view } = arg; // Destructure 'date' and 'view' from the arg object
+
+      // Check if the current view is 'dayGridMonth'
+      if (view.type === 'dayGridMonth') {
+        const dayOfMonth = date.getDate(); // Extract the day of the month from the date
+
+        let customContent = '';
+
+        // Iterate over each element in this.allevents
+        this.allevents.forEach(outerElement => {
+          // Check if the current element is an array
+          if (Array.isArray(outerElement)) {
+            // If it's an array, iterate over each event object within the array
+            outerElement.forEach(event => {
+              // Check if the event is an adminLimit event and occurs on the specified date
+              if (event.user === 'adminLimit' && this.isSameDay(event.start, date)) {
+                // Concatenate the custom content for the adminLimit event
+                customContent += `<div class='custom-content'>Available slot: ${event.title}</div>`;
+
+              }
+            });
+          }
+        });
+
+         // Filter events to find if there's an adminLimit event on this date
+  const adminLimitEvent = this.allevents.flat().find(event => {
+    return event.user === 'adminLimit' && new Date(event.start).getDate() === dayOfMonth;
+  });
+
+        // Construct HTML content for the day cell
+        const htmlContent = `
+      <div class='date-cell' style="justify-content: space-between;">
+        <div class='admin-limit-events'>
+        ${adminLimitEvent ? adminLimitEvent.title : ''}
+      </div>
+        <div class='date'>
+          ${dayOfMonth}
+        </div>
+      
+      </div>
+
+    `;
+
+
+        return { html: htmlContent }; // Return HTML content as an object with 'html' property
+      }
+
+      // Return null for other views to use default rendering
+      return null;
+    },
+
+
+
+
+
+
+
+
+    dayCellContent(arg) {
+  const { date, view } = arg;
+
+  // Check if the current view is 'dayGridMonth'
+  if (view.type === 'dayGridMonth') {
+    const dayOfMonth = date.getDate(); // Extract the day of the month from the date
+
+    // Find adminLimit events that match the current date
+    const adminLimitEvents = this.allevents.flat().filter(event => {
+      return event.user === 'adminLimit' && this.isSameDay(event.start, date);
+    });
+
+    // Prepare custom content for adminLimit events on this date
+    let customContent = '';
+    if (adminLimitEvents.length > 0) {
+      // Display information about adminLimit events
+      customContent = `<div class='custom-content'>
+                         Available slots: ${adminLimitEvents.map(event => event.title).join(', ')}
+                       </div>`;
+    }
+
+    // Construct HTML content for the day cell
+    const htmlContent = `
+      <div class='date-cell' style="justify-content: space-between;">
+        ${customContent}
+        <div class='date'>
+          ${dayOfMonth}
+        </div>
+       
+      </div>
+    `;
+    
+    return { html: htmlContent }; // Return HTML content as an object with 'html' property
+  }
+
+  // Return null for other views to use default rendering
+  return null;
+},

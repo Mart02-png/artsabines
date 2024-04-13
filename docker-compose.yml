@@ -17,7 +17,7 @@
         MYSQL_DATABASE: calendartester
         MYSQL_ROOT_PASSWORD: arts
       ports:
-        - "3306:3306"
+        - "3307:3306"
 
     vue:
       build:

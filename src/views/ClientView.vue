@@ -29,7 +29,8 @@ export default {
   data: function () {
     return {
       showDateTimeInputs: false,
-      selectedTime: '', // Time selected from the dropdown
+      selectedDate: '',
+      selectedTime: '',
       buttonText: 'Save changes',
       modalTitle: 'Create Schedule',
       buttonDisabled: false,
@@ -42,7 +43,7 @@ export default {
       nameRegex: /^[a-zA-Z\s]*$/,
       // emailRegex: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
       emailRegex: /^[a-zA-Z0-9._]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-      numberRegex: /^09\d{9}|^63\d{10}$/,
+      numberRegex: /^(09|63)\d{9}$/,
       showEmailPhoneError: false,
       nameInputValid: true,
         lastnameInputValid: true,
@@ -51,6 +52,12 @@ export default {
         validNumber: true,
 
       calendarOptions: {
+        customButtons: {
+          manuallyAddTime: {
+            text: 'Manually add Time',
+            click: this.manuallyAddTime
+          }
+        },
         //1 day only
         selectAllow: function (selectionInfo) {
           
@@ -71,9 +78,9 @@ export default {
           interactionPlugin // needed for dateClick
         ],
         headerToolbar: {
-          left: 'prev,next today',
+          left: 'prev,next today manuallyAddTime',
           center: 'title',
-          right: 'dayGridMonth,timeGridWeek,timeGridDay,listDay'
+          right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
         },
         themeSystem: 'bootstrap5',
         initialView: 'dayGridMonth',
@@ -86,9 +93,10 @@ export default {
         eventsSet: this.handleEvents,
         eventDisplay: 'block',
         slotMinTime: '05:00',
-        slotMaxTime: '18:00',
+        slotMaxTime: '17:00',
         slotDuration: '01:00',
         allDaySlot: false,
+     
       },
       allevents: [],
     }
@@ -112,10 +120,24 @@ export default {
 
   methods: {
 
+    saveDateTimeRange() {
+      
+      // console.log("Selected Date:", this.selectedDate);
+      // console.log("Selected Time:", document.getElementById("time").value);
+    },
+
+    manuallyAddTime() {
+      this.modalTitle = 'Manually create Schedule';
+      this.showDateTimeInputs = true;
+        // Implement the logic for adding time manually here
+        
+      this.modal.show();
+    },
+
     fetchEvents() {
       axios.get('http://localhost:8000/api/events')
         .then(response => {
-          let eventsFromAPI = response.data.filter(event => event.user === 'clientApproval' || event.user === 'admin' || event.user === 'adminLimit').map(event => {
+          let eventsFromAPI = response.data.filter(event => event.user === 'clientApproval').map(event => {
             let color;
             switch (event.user) {
               case 'clientApproval':
@@ -140,9 +162,6 @@ export default {
             };
           });
           this.calendarOptions.events = eventsFromAPI;
-          this.allevents.push(eventsFromAPI);
-          console.log("eventsFromAPI", eventsFromAPI, "allevents", this.allevents);
-
         })
         .catch(error => {
           console.error('Error fetching events:', error);
@@ -150,58 +169,35 @@ export default {
     },
 
     handleDateSelect(selectInfo) {
-
-    this.selectedTime = '05:00:00';
-    console.log(this.selectedTime);
-
-      const moment = require('moment');
-
-      //Recheck this code
-      //Recheck this code
-let selectedDate = moment(selectInfo.startStr).format('YYYY-MM-DD');
-let currentDate = moment().format('YYYY-MM-DD HH:mm');
-let currentTime2 = moment().format('HH:mm');
-let selectedDatefull = selectedDate + ' ' + currentTime2;
-
-let endNow = moment(selectedDatefull).add(1, 'minute').format('YYYY-MM-DD HH:mm');
-
-console.log("currentDate", currentDate, "selectedDatefull", endNow);
-
-// Check if the selected date is in the past, if currentDate and selectedDatefull are equal or currentDate is after selectedDatefull, then proceed
-if (currentDate > endNow) {
-  console.log('Selected date is in the past. Cannot add schedule.');
-  return; // Exit function if date is in the past
-}
-//Recheck this code
-//Recheck this code
-
-
-      console.log("selectInfo", selectInfo, "allevents", this.allevents);
       this.modalTitle = 'Create Schedule';
+      this.showDateTimeInputs = false;
+      if (this.showDateTimeInputs) {
+          console.log("Get date from manual add time");
+        } else {
+          console.log("Get date from selected date");
+        }
+    const moment = require('moment');
 
-      // const moment = require('moment');
+    const selectedTime = moment(selectInfo.startStr).format('HH:mm');
+    const currentTime = moment().format('HH:mm');
+    // console.log("selectedTime", selectedTime, "currentTime", currentTime);
 
-      const selectedTime = moment(selectInfo.startStr).format('HH:mm');
-      const currentTime = moment().format('HH:mm');
-
-      if (selectInfo.view.type === 'dayGridMonth' &&
-          (currentTime >= '12:00' && currentTime < '13:00')) {
-          updateErrorMessage("Lunch break");
-          this.errorModal.show();
-      } else if ((selectInfo.view.type === 'timeGridWeek' || selectInfo.view.type === 'timeGridDay') &&
-          (selectedTime >= '12:00' && selectedTime < '13:00')) {
-          updateErrorMessage("Lunch break");
-          this.errorModal.show();
-      } else {
-          this.checkEventOverlap(selectInfo);
-      }
-
-      if (selectInfo.view.type === 'dayGridMonth'){
-        this.showDateTimeInputs = true;
-      } else if(selectInfo.view.type === 'timeGridWeek' || selectInfo.view.type === 'timeGridDay'){
-        this.showDateTimeInputs = false;
-      }
-    },
+    if (selectInfo.view.type === 'dayGridMonth' &&
+        ((currentTime >= '00:00' && currentTime < '05:00') ||
+        (currentTime >= '12:00' && currentTime < '13:00') ||
+        (currentTime >= '17:00' && currentTime < '24:00'))) {
+        updateErrorMessage("No Appointment on this hours");
+        this.errorModal.show();
+    } else if ((selectInfo.view.type === 'timeGridWeek' || selectInfo.view.type === 'timeGridDay') &&
+        ((selectedTime >= '00:00' && selectedTime < '05:00') ||
+        (selectedTime >= '12:00' && selectedTime < '13:00') ||
+        (selectedTime >= '17:00' && selectedTime < '24:00'))) {
+        updateErrorMessage("No Appointment on this hours");
+        this.errorModal.show();
+    } else {
+        this.checkEventOverlap(selectInfo);
+    }
+},
 
     checkEventOverlap(selectInfo) {
       const moment = require('moment');
@@ -242,37 +238,43 @@ if (currentDate > endNow) {
       this.buttonDisabled = true;
 
       this.newEventTitle = this.nameInput + ' ' + this.lastnameInput;
+
+
       // Format start and end dates for timeGridWeek and timeGridDay
       const moment = require('moment');
       
       let lastStart = '';
       let lastEnd = '';
 
-      // if (this.showDateTimeInputs) {
-      //   let selectedTimePlusOneHour = moment(this.selectedTime, 'HH:mm').add(1, 'hour').format('HH:mm');
-      //   console.log("Get date from manual add time", this.showDateTimeInputs , confirmSavingInfo);
-      //   lastStart = this.selectedDate + ' ' + this.selectedTime;
-      //   lastEnd = this.selectedDate + ' ' + selectedTimePlusOneHour;
-      //   // console.log("lastStart", lastStart, "lastEnd", lastEnd, "selectedTimePlusOneHour", selectedTimePlusOneHour);
-      // } else {
+      if (this.showDateTimeInputs) {
+        let selectedTimePlusOneHour = moment(this.selectedTime, 'HH:mm').add(1, 'hour').format('HH:mm');
+        console.log("Get date from manual add time", this.showDateTimeInputs , confirmSavingInfo);
+        lastStart = this.selectedDate + ' ' + this.selectedTime;
+        lastEnd = this.selectedDate + ' ' + selectedTimePlusOneHour;
+        // console.log("lastStart", lastStart, "lastEnd", lastEnd, "selectedTimePlusOneHour", selectedTimePlusOneHour);
+      } else {
         let calendarApi = confirmSavingInfo.view.calendar;
         calendarApi.unselect() // clear date selection
 
-        // let currentTimeNow = moment().format('HH:00:00');
-        let startNow = this.selectedTime;
-        let endNow = moment(startNow, 'HH:00:00').add(1, 'hour').format('HH:00:00');
+        let currentTimeNow = moment().format('HH:00:00');
+        let startNow = currentTimeNow;
+        let endNow = moment(currentTimeNow, 'HH:00:00').add(1, 'hour').format('HH:00:00');
 
         // Format start and end dates for dayGridMonth
         let start = formatDatetime(confirmSavingInfo.startStr);
         let end = formatDatetime(confirmSavingInfo.endStr);
 
+        console.log("Get date from selected date", this.showDateTimeInputs , confirmSavingInfo);
+
         if (confirmSavingInfo.view.type === 'dayGridMonth'){
           lastStart = start + ' ' + startNow;
-          lastEnd = start + ' ' + endNow;
+          lastEnd = end + ' ' + endNow;
         }else if(confirmSavingInfo.view.type === 'timeGridWeek' || confirmSavingInfo.view.type === 'timeGridDay'){
           lastStart = start;
           lastEnd = end;
         }
+        
+      }
       console.log("lastStart", lastStart, "lastEnd", lastEnd);
 
       
@@ -352,34 +354,67 @@ if (currentDate > endNow) {
 
 <template>
   <div class='demo-app'>
-    <div class='demo-app-sidebar' style="display: flex; flex-direction: column; justify-content: space-between;">
+    <div class='demo-app-sidebar' style="position: sticky; top: 0; display: flex; flex-direction: column; justify-content: space-between; width: 250px; border: 2px solid #000;">
       <div>
         <div class="text-center">
-          <img src="../assets/icon.png" alt="Ears Nose and Throat" style="width: 160px; height: auto; "
-            class="img-fluid">
+          <img src="../assets/icon.png" alt="Ears Nose and Throat" style="width: 140px; height: auto; " class="img-fluid">
         </div>
-        <div style="margin: 50px 5px 10px 5px ;">
-          <h2>Instructions</h2>
-          <ul style="text-align: left;">
-            <li>Select dates and you will be prompted to create a new event</li>
-            <li>Drag, drop, and resize events</li>
-            <li>Click an event to delete it</li>
-          </ul>
+        <div style="margin-top: 25px;">
+          <h5 style="font-weight: bold; font-size: 1.5em; color: #333; text-transform: uppercase; letter-spacing: 1px;"> Gentle Care Clinic</h5>
         </div>
       </div>
-
-      <!-- Admin Login -->
-      <div class="text-center" style="margin: 10px 5px 10px 5px ;">
-        <router-link :to="{ name: 'about' }">about</router-link>
-        <router-view />
+      <div style="margin-top: 45px;">
+        <ul style="list-style-type: none; padding: 0;">
+          <li style="margin-bottom: 10px;">
+            <router-link to="/landing" class="nav-link">
+              <h6 style="font-weight: bold; font-size: 1.3em; ">Landing Page</h6>
+              <i class="fas fa-info-circle"></i> About Us
+            </router-link>
+          </li>
+          <li style="margin-bottom: 10px;">
+            <router-link to="/forum" class="nav-link">
+              
+            </router-link>
+          </li>
+          <li style="margin-bottom: 10px;">
+            <router-link to="/community" class="nav-link">
+             
+            </router-link>
+          </li>
+        </ul>
       </div>
-
-      <!-- Admin Login -->
-      <div class="text-center" style="margin: 10px 5px 10px 5px ;">
-        <router-link :to="{ name: 'login' }">Admin Login</router-link>
-        <router-view />
+      <div style="margin-top: 10px;">
+        <h6 style="font-weight: bold;font-size: 1.3em; ">Social Media Links</h6>
+        <ul style="list-style-type: none; padding: 0;">
+          <li style="margin-bottom: 10px;">
+            <a href="https://www.facebook.com" class="social-link">
+              <i class="fab fa-facebook"></i> Facebook
+            </a>
+          </li>
+          <li style="margin-bottom: 10px;">
+            <a href="https://t.me" class="social-link">
+              <i class="fab fa-telegram"></i> Telegram
+            </a>
+          </li>
+          <li style="margin-bottom: 10px;">
+            <a href="https://twitter.com" class="social-link">
+              <i class="fab fa-twitter"></i> Twitter
+            </a>
+          </li>
+        </ul>
       </div>
+      <!--for admin-->
+      <div style="text-align: center; margin-top: 20px;">
+  <router-link to="/admin">
+    <i class="fas fa-user-tie" style="font-size: 24px; color: #333;"></i>
+  </router-link>
+</div>
+      <!--for admin-->
     </div>
+  
+
+
+
 
 
     <div class='demo-app-main'>
@@ -389,6 +424,12 @@ if (currentDate > endNow) {
           <i>{{ arg.event.title }}</i>
         </template>
       </FullCalendar>
+
+      <div class="footer-content">
+  <p>&copy; 2024 Gentle Care Clinic. All rights reserved.</p>
+  <p></p>
+</div>
+
 
       <!-- Modal -->
       <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -401,7 +442,26 @@ if (currentDate > endNow) {
             <!-- Modal Body Content -->
             <div class="modal-body">
 
-             
+              <div class="mb-3">
+                <label v-if="showDateTimeInputs" for="date">Date:</label>
+                <input v-if="showDateTimeInputs" type="date" id="date" v-model="selectedDate">
+            
+                <label v-if="showDateTimeInputs" for="time">Time:</label>
+                  <select v-if="showDateTimeInputs" id="time" name="time" v-model="selectedTime">
+                    <option value="05:00:00">05:00 AM</option>
+                    <option value="06:00:00">06:00 AM</option>
+                    <option value="07:00:00">07:00 AM</option>
+                    <option value="08:00:00">08:00 AM</option>
+                    <option value="09:00:00">09:00 AM</option>
+                    <option value="10:00:00">10:00 AM</option>
+                    <option value="11:00:00">11:00 AM</option>
+                    <option value="01:00:00">01:00 PM</option>
+                    <option value="02:00:00">02:00 PM</option>
+                    <option value="03:00:00">03:00 PM</option>
+                    <option value="04:00:00">04:00 PM</option>
+                    <option value="05:00:00">05:00 PM</option>
+                  </select>
+              </div>
               <div class="mb-3">
                 <input type="text" class="form-control" id="nameInput" v-model="nameInput" placeholder="Name">
                 <small v-if="!nameInput && !nameInputValid" class="text-danger">Please fill Name</small>
@@ -418,27 +478,11 @@ if (currentDate > endNow) {
                 <small v-if="!emailInput && !emailInputValid" class="text-danger">Please fill contact information</small>
                 <small v-else-if="emailInput && !emailRegex.test(emailInput) && !numberRegex.test(emailInput)" class="text-danger">Please fill valid Email or valid phone number</small>
               </div>
-              <div class="mb-3">
-                <label v-if="showDateTimeInputs" for="time">Time:</label>
-                  <select v-if="showDateTimeInputs"  id="time" name="time" v-model="selectedTime">
-                    <option value="05:00:00">05:00 AM</option>
-                    <option value="06:00:00">06:00 AM</option>
-                    <option value="07:00:00">07:00 AM</option>
-                    <option value="08:00:00">08:00 AM</option>
-                    <option value="09:00:00">09:00 AM</option>
-                    <option value="10:00:00">10:00 AM</option>
-                    <option value="11:00:00">11:00 AM</option>
-                    <option value="01:00:00">01:00 PM</option>
-                    <option value="02:00:00">02:00 PM</option>
-                    <option value="03:00:00">03:00 PM</option>
-                    <option value="04:00:00">04:00 PM</option>
-                    <option value="05:00:00">05:00 PM</option>
-                  </select>
-              </div>
+              <!-- Rest of your modal content -->
             </div>
 
             <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
               <button type="button" class="btn btn-primary" @click="saveChanges(selectedInfo)">Save changes</button>
             </div>
           </div>
@@ -462,7 +506,7 @@ if (currentDate > endNow) {
             </div>
               
             <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @click="closeModal()">Close</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @click="closeModal()">Cancel</button>
               <button type="button" class="btn btn-primary" @click="savingConfirmationEvent(selectedInfo)" :disabled="buttonDisabled"> {{ buttonText }} </button>
             </div>
           </div>
@@ -484,7 +528,7 @@ if (currentDate > endNow) {
                 </h4>
               </div>
               <div class="modal-footer">
-                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancel</button>
               </div>
             </div>
           </div>
@@ -492,6 +536,17 @@ if (currentDate > endNow) {
 
     </div>
   </div>
+
+
+ 
 </template>
-<style src="@/styles/styles.css">
+
+
+
+
+<style src="@/styles/ClientViewStyles.css">
+
+
+
 </style>
+

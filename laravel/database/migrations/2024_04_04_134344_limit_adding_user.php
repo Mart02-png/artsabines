@@ -17,9 +17,9 @@ return new class extends Migration
         Schema::create('limitables', function (Blueprint $table) {
             $table->id();
             $table->unsignedInteger('limittoday');
+            $table->string('email');
             $table->dateTime('start');
             $table->dateTime('end');
-            $table->string('email');
             $table->timestamps();
         });
     }

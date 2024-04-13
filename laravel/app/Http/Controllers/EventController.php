@@ -20,7 +20,7 @@ class EventController extends Controller
             'email' => 'required',
             'start' => 'required|date',
             'end' => 'required|date',
-            'user' => 'required|in:clientApproval,clientApproved,admin',
+            'user' => 'required|in:clientApproval,clientApproved,admin,adminLimit',
             'allDay' => 'required|boolean',
         ]);
 
@@ -43,7 +43,7 @@ class EventController extends Controller
     public function updateClient(Request $request, Event $event)
     {
         $validatedData = $request->validate([
-            'user' => 'required|in:clientApproval,clientApproved,admin',
+            'user' => 'required|in:clientApproval,clientApproved,admin,adminLimit',
         ]);
 
         $event->update($validatedData);

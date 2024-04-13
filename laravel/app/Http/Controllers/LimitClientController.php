@@ -18,9 +18,10 @@ class LimitClientController extends Controller
     public function store(Request $request){
     $validatedData = $request->validate([
         'limittoday' => 'required',
+        'email' => 'required',
         'start' => 'required|date',
         'end' => 'required|date',
-        'email' => 'required',
+        
     ]);
         
         // return response()->json($limitClient, 201);

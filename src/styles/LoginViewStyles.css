@@ -1,0 +1,49 @@
+.app {
+    background-color: #f8f9fa; /* Light gray background */
+  }
+  
+  
+  .card {
+    border-radius: 15px;
+  }
+  
+  .card-body {
+    background-color: #fff; /* White card background */
+    border-radius: 15px;
+  }
+  
+  .form-label {
+    font-weight: bold;
+  }
+  
+  .input-group-text {
+    background-color: #fff; /* White background for input group */
+    border-radius: 15px 0 0 15px;
+  }
+  
+  .form-control {
+    border-radius: 0 15px 15px 0;
+  }
+  
+  .btn-primary {
+    background-color: #007bff; /* Blue primary button color */
+    border: none;
+  }
+  
+  .btn-primary:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+  }
+  
+  .text-danger {
+    font-size: 14px;
+  }
+  
+  .app {
+   
+    background-size: cover; /* Cover the entire container */
+    background-position: center; /* Center the background image */
+    background-repeat: no-repeat; /* Do not repeat the background image */
+    padding: 20px; /* Add padding to the container */
+    background-color:  #2c3e50ca;
+  }  
+
