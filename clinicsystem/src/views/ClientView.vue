@@ -12,6 +12,7 @@ import * as bootstrap from 'bootstrap';
 // import { options } from '@fullcalendar/core/preact'
 // import { format } from 'core-js/core/date'
 
+
 function formatDatetime(datetimeStr) {
   return datetimeStr.replace('T', ' ').replace(/\+.*$/, '');
 }
