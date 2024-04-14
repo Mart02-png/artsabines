@@ -1,5 +1,3 @@
-<!-- ClientView.vue -->
-
 <script>
 
 import FullCalendar from '@fullcalendar/vue3'
@@ -11,6 +9,8 @@ import listPlugin from '@fullcalendar/list'
 import axios from 'axios';
 import bootstrap5Plugin from '@fullcalendar/bootstrap5'
 import * as bootstrap from 'bootstrap';
+// import { options } from '@fullcalendar/core/preact'
+// import { format } from 'core-js/core/date'
 
 function formatDatetime(datetimeStr) {
   return datetimeStr.replace('T', ' ').replace(/\+.*$/, '');
@@ -30,6 +30,20 @@ export default {
     return {
       showDateTimeInputs: false,
       selectedTime: '', // Time selected from the dropdown
+      timeOptions: [
+        { value: '05:00:00', label: '05:00 AM' },
+        { value: '06:00:00', label: '06:00 AM' },
+        { value: '07:00:00', label: '07:00 AM' },
+        { value: '08:00:00', label: '08:00 AM' },
+        { value: '09:00:00', label: '09:00 AM' },
+        { value: '10:00:00', label: '10:00 AM' },
+        { value: '11:00:00', label: '11:00 AM' },
+        { value: '13:00:00', label: '01:00 PM' },
+        { value: '14:00:00', label: '02:00 PM' },
+        { value: '15:00:00', label: '03:00 PM' },
+        { value: '16:00:00', label: '04:00 PM' },
+        { value: '17:00:00', label: '05:00 PM' }
+      ],
       buttonText: 'Save changes',
       modalTitle: 'Create Schedule',
       buttonDisabled: false,
@@ -124,6 +138,10 @@ export default {
               case 'admin':
                 color = '#FF2D00';
                 break;
+              case 'adminLimit':
+                color = '#0047AB';
+                event.title = `Available slot: ${event.title}`;
+                break;
               default:
                 color = '#007FFF';
                 break;
@@ -141,7 +159,6 @@ export default {
           });
           this.calendarOptions.events = eventsFromAPI;
           this.allevents.push(eventsFromAPI);
-          console.log("eventsFromAPI", eventsFromAPI, "allevents", this.allevents);
 
         })
         .catch(error => {
@@ -149,51 +166,87 @@ export default {
         });
     },
 
-    handleDateSelect(selectInfo) {
+  handleDateSelect(selectInfo) {
+    this.selectedTime = '05:00:00'
+    this.timeOptions= [
+        { value: '05:00:00', label: '05:00 AM' },
+        { value: '06:00:00', label: '06:00 AM' },
+        { value: '07:00:00', label: '07:00 AM' },
+        { value: '08:00:00', label: '08:00 AM' },
+        { value: '09:00:00', label: '09:00 AM' },
+        { value: '10:00:00', label: '10:00 AM' },
+        { value: '11:00:00', label: '11:00 AM' },
+        { value: '13:00:00', label: '01:00 PM' },
+        { value: '14:00:00', label: '02:00 PM' },
+        { value: '15:00:00', label: '03:00 PM' },
+        { value: '16:00:00', label: '04:00 PM' },
+        { value: '17:00:00', label: '05:00 PM' }
+      ];
 
-    this.selectedTime = '05:00:00';
-    console.log(this.selectedTime);
+    axios.get('http://localhost:8000/api/events')
+    .then(response => {
+      response.data.forEach(event => {
+        const moment = require('moment');
+        const startEventTime = moment(event.start).format('HH:mm:ss');
+        const endEventTime = moment(event.end).format('HH:mm:ss');
+
+        const startEventDate = moment(event.start).format('YYYY-MM-DD');
+        const endEventDate = moment(event.end).format('YYYY-MM-DD');
+
+        if (startEventDate !== selectInfo.startStr && endEventDate !== selectInfo.endStr) {
+          return this.timeOptions;
+        }
+
+        
+        if (event.user === 'admin' || event.user === 'clientApproval') {
+          this.timeOptions = this.timeOptions.filter(timeOption => {
+            return timeOption.value < startEventTime || timeOption.value >= endEventTime;
+          });
+        }
+
+        if (this.timeOptions.length > 0) {
+          this.selectedTime = this.timeOptions[0].value;
+        }
+
+      });
+    })
+    .catch(error => {
+      console.error('Error fetching events:', error);
+    });
+
+
 
       const moment = require('moment');
+  
+      //   //Recheck if dat already pass
+      let selectedDate = moment(selectInfo.startStr).format('YYYY-MM-DD');
+      let currentDate = moment().format('YYYY-MM-DD HH:mm');
+      let currentTime2 = moment().format('HH:mm');
+      let selectedDatefull = selectedDate + ' ' + currentTime2;
 
-      //Recheck this code
-      //Recheck this code
-let selectedDate = moment(selectInfo.startStr).format('YYYY-MM-DD');
-let currentDate = moment().format('YYYY-MM-DD HH:mm');
-let currentTime2 = moment().format('HH:mm');
-let selectedDatefull = selectedDate + ' ' + currentTime2;
+      let endNow = moment(selectedDatefull).add(1, 'minute').format('YYYY-MM-DD HH:mm');
 
-let endNow = moment(selectedDatefull).add(1, 'minute').format('YYYY-MM-DD HH:mm');
+      // Check if the selected date is in the past, if currentDate and selectedDatefull are equal or currentDate is after selectedDatefull, then proceed
+      if (currentDate > endNow) {
+        console.log('Selected date is in the past. Cannot add schedule.');
+        updateErrorMessage("Date already passed away, you cannot add schedule on this date.");
+        this.errorModal.show();
+        return; // Exit function if date is in the past
+      }
 
-console.log("currentDate", currentDate, "selectedDatefull", endNow);
-
-// Check if the selected date is in the past, if currentDate and selectedDatefull are equal or currentDate is after selectedDatefull, then proceed
-if (currentDate > endNow) {
-  console.log('Selected date is in the past. Cannot add schedule.');
-  return; // Exit function if date is in the past
-}
-//Recheck this code
-//Recheck this code
-
-
-      console.log("selectInfo", selectInfo, "allevents", this.allevents);
       this.modalTitle = 'Create Schedule';
 
       // const moment = require('moment');
 
       const selectedTime = moment(selectInfo.startStr).format('HH:mm');
-      const currentTime = moment().format('HH:mm');
-
-      if (selectInfo.view.type === 'dayGridMonth' &&
-          (currentTime >= '12:00' && currentTime < '13:00')) {
-          updateErrorMessage("Lunch break");
-          this.errorModal.show();
-      } else if ((selectInfo.view.type === 'timeGridWeek' || selectInfo.view.type === 'timeGridDay') &&
+      if ((selectInfo.view.type === 'timeGridWeek' || selectInfo.view.type === 'timeGridDay') &&
           (selectedTime >= '12:00' && selectedTime < '13:00')) {
           updateErrorMessage("Lunch break");
           this.errorModal.show();
       } else {
-          this.checkEventOverlap(selectInfo);
+          this.modal.show();
+          this.selectedInfo = selectInfo;
+          // this.checkEventOverlap(selectInfo);
       }
 
       if (selectInfo.view.type === 'dayGridMonth'){
@@ -201,35 +254,6 @@ if (currentDate > endNow) {
       } else if(selectInfo.view.type === 'timeGridWeek' || selectInfo.view.type === 'timeGridDay'){
         this.showDateTimeInputs = false;
       }
-    },
-
-    checkEventOverlap(selectInfo) {
-      const moment = require('moment');
-      const currentTime = moment().format('HH:mm:ss');
-      let startSelectedDate = selectInfo.startStr + " " + currentTime;
-
-      axios.get('http://localhost:8000/api/events')
-        .then(response => {
-          let canAddEvent = true;
-          response.data.forEach(event => {
-            const moment = require('moment');
-            let startSelectedDateNoTime = moment(selectInfo.startStr).format('YYYY-MM-DD');
-            let EndSelectedDateNoTime = moment(event.start).format('YYYY-MM-DD');
-            if (event.user === 'admin' && event.allDay === 1 && startSelectedDateNoTime === EndSelectedDateNoTime || event.user === 'admin' && startSelectedDate >= event.start && startSelectedDate <= event.end) {
-              canAddEvent = false;
-              updateErrorMessage("The schedule is busy on this day. Please select another date");
-              this.errorModal.show();
-            }
-          });
-
-          if (canAddEvent) {
-            this.modal.show();
-            this.selectedInfo = selectInfo;
-          }
-        })
-        .catch(error => {
-          console.error('Error fetching events:', error);
-        });
     },
 
     closeModal(){
@@ -248,13 +272,6 @@ if (currentDate > endNow) {
       let lastStart = '';
       let lastEnd = '';
 
-      // if (this.showDateTimeInputs) {
-      //   let selectedTimePlusOneHour = moment(this.selectedTime, 'HH:mm').add(1, 'hour').format('HH:mm');
-      //   console.log("Get date from manual add time", this.showDateTimeInputs , confirmSavingInfo);
-      //   lastStart = this.selectedDate + ' ' + this.selectedTime;
-      //   lastEnd = this.selectedDate + ' ' + selectedTimePlusOneHour;
-      //   // console.log("lastStart", lastStart, "lastEnd", lastEnd, "selectedTimePlusOneHour", selectedTimePlusOneHour);
-      // } else {
         let calendarApi = confirmSavingInfo.view.calendar;
         calendarApi.unselect() // clear date selection
 
@@ -273,9 +290,7 @@ if (currentDate > endNow) {
           lastStart = start;
           lastEnd = end;
         }
-      console.log("lastStart", lastStart, "lastEnd", lastEnd);
 
-      
         axios.post('http://localhost:8000/api/events', {
           title: this.newEventTitle,
           email: this.emailInput,
@@ -285,16 +300,13 @@ if (currentDate > endNow) {
           allDay: false
         })
           .then(response => {
-            console.log(response.data);
             this.savingConfirmation.hide();
             this.buttonText = 'Save changes';
             this.buttonDisabled = false;
             this.allevents.push(response.data);
 
-            // calendarApi.addEvent(response.data);
             this.fetchEvents();
 
-            // this.newEventTitle = '';
             this.nameInput = '';
             this.lastnameInput = '';
             this.emailInput = '';
@@ -318,32 +330,55 @@ if (currentDate > endNow) {
 
     // Check if all inputs are filled
 
-  // Check if all inputs are filled
-  if (!this.nameInputValid || !this.lastnameInputValid || !this.emailInputValid) {
-    return;
-  }
+    // Check if all inputs are filled
+    if (!this.nameInputValid || !this.lastnameInputValid || !this.emailInputValid) {
+      return;
+    }
 
-  // Validation for Name Input
-  if (!this.nameRegex.test(this.nameInput)) {
-    this.nameInputValid = false;
-    return;
-  }
+    // Validation for Name Input
+    if (!this.nameRegex.test(this.nameInput)) {
+      this.nameInputValid = false;
+      return;
+    }
 
-  // Validation for Lastname Input
-  if (!this.nameRegex.test(this.lastnameInput)) {
-    this.lastnameInputValid = false;
-    return;
-  }
+    // Validation for Lastname Input
+    if (!this.nameRegex.test(this.lastnameInput)) {
+      this.lastnameInputValid = false;
+      return;
+    }
 
-  // Validation for Email Input
-  if (!this.emailRegex.test(this.emailInput) && !this.numberRegex.test(this.emailInput)) {
-    this.emailInputValid = false;
-    return;
-  }
+    // Validation for Email Input
+    if (!this.emailRegex.test(this.emailInput) && !this.numberRegex.test(this.emailInput)) {
+      this.emailInputValid = false;
+      return;
+    }
 
-      this.modal.hide();
-      this.savingConfirmation.show();
-      this.confirmSavingInfo = selectedInfo;
+    axios.get('http://localhost:8000/api/events')
+        .then(response => {
+          let canAddEvent = true;
+          response.data.forEach(event => {
+            
+            const moment = require('moment');
+            const startEvent = moment(event.start).format('HH:mm:ss');
+            const endEvent = moment(event.end).format('HH:mm:ss');
+           
+            
+            if (event.user === 'adminLimit' && this.selectedTime >= startEvent && this.selectedTime <= endEvent) {
+              console.log("Check to limit");
+            }
+          });
+
+          if(canAddEvent){
+            this.modal.hide();
+            this.savingConfirmation.show();
+            this.confirmSavingInfo = selectedInfo;
+          }
+          
+        })
+        .catch(error => {
+          console.error('Error fetching events:', error);
+        });
+
     },
 
   }
@@ -420,25 +455,18 @@ if (currentDate > endNow) {
               </div>
               <div class="mb-3">
                 <label v-if="showDateTimeInputs" for="time">Time:</label>
-                  <select v-if="showDateTimeInputs"  id="time" name="time" v-model="selectedTime">
-                    <option value="05:00:00">05:00 AM</option>
-                    <option value="06:00:00">06:00 AM</option>
-                    <option value="07:00:00">07:00 AM</option>
-                    <option value="08:00:00">08:00 AM</option>
-                    <option value="09:00:00">09:00 AM</option>
-                    <option value="10:00:00">10:00 AM</option>
-                    <option value="11:00:00">11:00 AM</option>
-                    <option value="01:00:00">01:00 PM</option>
-                    <option value="02:00:00">02:00 PM</option>
-                    <option value="03:00:00">03:00 PM</option>
-                    <option value="04:00:00">04:00 PM</option>
-                    <option value="05:00:00">05:00 PM</option>
-                  </select>
+                <select v-if="showDateTimeInputs"  id="time" name="time" v-model="selectedTime">       
+                  <option :value="time.value" 
+                    v-for="time in timeOptions" 
+                    :key="time.value">
+                    {{ time.label }}
+                  </option>
+                </select>
               </div>
             </div>
 
             <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
               <button type="button" class="btn btn-primary" @click="saveChanges(selectedInfo)">Save changes</button>
             </div>
           </div>
@@ -462,7 +490,7 @@ if (currentDate > endNow) {
             </div>
               
             <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @click="closeModal()">Close</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @click="closeModal()">Back</button>
               <button type="button" class="btn btn-primary" @click="savingConfirmationEvent(selectedInfo)" :disabled="buttonDisabled"> {{ buttonText }} </button>
             </div>
           </div>
@@ -484,7 +512,7 @@ if (currentDate > endNow) {
                 </h4>
               </div>
               <div class="modal-footer">
-                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Back</button>
               </div>
             </div>
           </div>
