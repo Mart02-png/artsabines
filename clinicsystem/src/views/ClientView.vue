@@ -207,9 +207,9 @@ export default {
 
         if (this.timeOptions.length > 0) {
           this.selectedTime = this.timeOptions[0].value;
-          console.log("arts");
+        
         }
-
+        console.log("arts");
       });
     })
     .catch(error => {
